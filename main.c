@@ -4,13 +4,19 @@
 int main(int argc, char *argv[])
 {
   if (argc<3) {
-    printf("qrencode <input file> <output file> <QR Code version>\n");
+    printf("qrencode <input file> <output file> [QR Code level] [QR Code version]\n");
+    printf("level and version default to 3 and 0\n";
     return 1;
   }
 
-  int version=3;
+  int level=3;
   if(argc>3) {
-    version = atoi(argv[3]);
+    level = atoi(argv[3]);
+  }
+
+  int version=0;
+  if(argc>4) {
+    version = atoi(argv[4]);
   }
 
   // Read in the input data from file, terminate with 0.
@@ -26,7 +32,7 @@ int main(int argc, char *argv[])
   // **** This calls the library and encodes the data
   // *** length is taken from NULL termination, however can also be passed by parameter.
   BYTE QR_m_data[3917]; //max possible bits resolution 177*177/8+1
-  int QR_width=EncodeData(version,0,inputdata,0,QR_m_data);
+  int QR_width=EncodeData(3,version,inputdata,0,QR_m_data);
 
   // Write the data to the output file
   FILE *f=fopen(argv[2],"w");
