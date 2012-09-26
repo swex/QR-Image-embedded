@@ -13,6 +13,7 @@ int main(int argc, char *argv[])
     version = atoi(argv[3]);
   }
 
+  // Read in the input data from file, terminate with 0.
   FILE *inputfile = fopen(argv[1],"r");
   char inputdata[10000];
   int n;
@@ -22,10 +23,12 @@ int main(int argc, char *argv[])
     inputdata[n+1]=0;
   }
 
+  // **** This calls the library and encodes the data
+  // *** length is taken from NULL termination, however can also be passed by parameter.
   BYTE QR_m_data[3917]; //max possible bits resolution 177*177/8+1
-
-  // int EncodeData(int nLevel, int nVersion , LPCSTR lpsSource, int sourcelen, unsigned char QR_m_data[])
   int QR_width=EncodeData(version,0,inputdata,0,QR_m_data);
+
+  // Write the data to the output file
   FILE *f=fopen(argv[2],"w");
   int size=((QR_width*QR_width)/8)+(((QR_width*QR_width)%8)?1:0);
   printf("\nwriting file %i bytes size \n",size);
