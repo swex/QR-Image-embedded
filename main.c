@@ -5,7 +5,7 @@ int main(int argc, char *argv[])
 {
   if (argc<3) {
     printf("qrencode <input file> <output file> [QR Code level] [QR Code version]\n");
-    printf("level and version default to 3 and 0\n";
+    printf("level and version default to 3 and 0\n");
     return 1;
   }
 
