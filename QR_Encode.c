@@ -12,8 +12,6 @@ int m_ncDataBlock;
 
 //BYTE m_byRSWork[MAX_CODEBLOCK]; //RS code word calculation work
 
-
-
 int m_nSymbolSize;
 
 static QR_VERSIONINFO QR_VersionInfo[] = {{0}, // (Ver.0)

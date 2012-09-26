@@ -26,9 +26,9 @@
 
 
 //Group version (model number)
-#define QR_VRESION_S	0 // 1 ~ 9
-#define QR_VRESION_M	1 // 10 ~ 26
-#define QR_VRESION_L	2 // 27 ~ 40
+#define QR_VERSION_S	0 // 1 ~ 9
+#define QR_VERSION_M	1 // 10 ~ 26
+#define QR_VERSION_L	2 // 27 ~ 40
 
 #define MAX_ALLCODEWORD	 3706 //The maximum total number of code words
 #define MAX_DATACODEWORD 2956 //Maximum data word code (version 40-L)
