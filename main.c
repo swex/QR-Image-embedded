@@ -19,6 +19,8 @@ int main(int argc, char *argv[])
   fwrite(QR_m_data,size,1,f);
   fclose(f);
 
+
+  // This code dumps the QR code to the screen as ASCII.
   int bit_count=0;
   int n;
   for(n=0;n<size;n++) {
