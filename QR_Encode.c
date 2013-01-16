@@ -12,11 +12,9 @@ int m_ncDataBlock;
 
 //BYTE m_byRSWork[MAX_CODEBLOCK]; //RS code word calculation work
 
+int m_nSymbolSize;
 
-
-int m_nSymbleSize;
-
-static QR_VERSIONINFO QR_VersonInfo[] = {{0}, // (Ver.0)
+static QR_VERSIONINFO QR_VersionInfo[] = {{0}, // (Ver.0)
 										 { 1, // Ver.1
 										    26,   19,   16,   13,    9,
 										   0,   0,   0,   0,   0,   0,   0,
@@ -642,7 +640,7 @@ int IsKanjiData(unsigned char c1, unsigned char c2)
 // Number of arguments: the target character
 // Returns: binary value
 
-BYTE AlphabetToBinaly(unsigned char c)
+BYTE AlphabetToBinary(unsigned char c)
 {
 	if (c >= '0' && c <= '9') return (unsigned char)(c - '0');
 
@@ -1076,15 +1074,15 @@ int EncodeSourceData(LPCSTR lpsSource, int ncLength, int nVerGroup,int m_nBlockL
 			{
 				if (j < m_nBlockLength[i] - 1)
 				{
-					wBinCode = (WORD)((AlphabetToBinaly(lpsSource[ncComplete + j]) * 45) +
-									   AlphabetToBinaly(lpsSource[ncComplete + j + 1]));
+					wBinCode = (WORD)((AlphabetToBinary(lpsSource[ncComplete + j]) * 45) +
+									   AlphabetToBinary(lpsSource[ncComplete + j + 1]));
 
 					m_ncDataCodeWordBit = SetBitStream(m_ncDataCodeWordBit, wBinCode, 11,m_byDataCodeWord);
 				}
 				else
 				{
 					// A fraction of bytes
-					wBinCode = (WORD)AlphabetToBinaly(lpsSource[ncComplete + j]);
+					wBinCode = (WORD)AlphabetToBinary(lpsSource[ncComplete + j]);
 
 					m_ncDataCodeWordBit = SetBitStream(m_ncDataCodeWordBit, wBinCode, 6,m_byDataCodeWord);
 				}
@@ -1157,34 +1155,34 @@ int EncodeSourceData(LPCSTR lpsSource, int ncLength, int nVerGroup,int m_nBlockL
 
 int GetEncodeVersion(int nVersion, LPCSTR lpsSource, int ncLength,int m_nBlockLength[MAX_DATACODEWORD],BYTE m_byBlockMode[MAX_DATACODEWORD],BYTE m_byDataCodeWord[MAX_DATACODEWORD])
 {
-	int nVerGroup = nVersion >= 27 ? QR_VRESION_L : (nVersion >= 10 ? QR_VRESION_M : QR_VRESION_S);
+	int nVerGroup = nVersion >= 27 ? QR_VERSION_L : (nVersion >= 10 ? QR_VERSION_M : QR_VERSION_S);
 	int i, j;
 
-	for (i = nVerGroup; i <= QR_VRESION_L; ++i)
+	for (i = nVerGroup; i <= QR_VERSION_L; ++i)
 	{
 		if (EncodeSourceData(lpsSource, ncLength, i, m_nBlockLength, m_byBlockMode, m_byDataCodeWord))
 		{
-			if (i == QR_VRESION_S)
+			if (i == QR_VERSION_S)
 			{
 				for (j = 1; j <= 9; ++j)
 				{
-					if ((m_ncDataCodeWordBit + 7) / 8 <= QR_VersonInfo[j].ncDataCodeWord[m_nLevel])
+					if ((m_ncDataCodeWordBit + 7) / 8 <= QR_VersionInfo[j].ncDataCodeWord[m_nLevel])
 						return j;
 				}
 			}
-			else if (i == QR_VRESION_M)
+			else if (i == QR_VERSION_M)
 			{
 				for (j = 10; j <= 26; ++j)
 				{
-					if ((m_ncDataCodeWordBit + 7) / 8 <= QR_VersonInfo[j].ncDataCodeWord[m_nLevel])
+					if ((m_ncDataCodeWordBit + 7) / 8 <= QR_VersionInfo[j].ncDataCodeWord[m_nLevel])
 						return j;
 				}
 			}
-			else if (i == QR_VRESION_L)
+			else if (i == QR_VERSION_L)
 			{
 				for (j = 27; j <= 40; ++j)
 				{
-					if ((m_ncDataCodeWordBit + 7) / 8 <= QR_VersonInfo[j].ncDataCodeWord[m_nLevel])
+					if ((m_ncDataCodeWordBit + 7) / 8 <= QR_VersionInfo[j].ncDataCodeWord[m_nLevel])
 						return j;
 				}
 			}
@@ -1285,7 +1283,7 @@ void SetVersionPattern(BYTE m_byModuleData[177][177])
 	{
 		for (j = 0; j < 3; ++j)
 		{
-			m_byModuleData[m_nSymbleSize - 11 + j][i] = m_byModuleData[i][m_nSymbleSize - 11 + j] =
+			m_byModuleData[m_nSymbolSize - 11 + j][i] = m_byModuleData[i][m_nSymbolSize - 11 + j] =
 			(nVerData & (1 << (i * 3 + j))) ? '\x30' : '\x20';
 		}
 	}
@@ -1323,15 +1321,15 @@ void SetFunctionModule(BYTE m_byModuleData[177][177])
 
 	//Position detection pattern
 	SetFinderPattern(0, 0,m_byModuleData);
-	SetFinderPattern(m_nSymbleSize - 7, 0,m_byModuleData);
-	SetFinderPattern(0, m_nSymbleSize - 7,m_byModuleData);
+	SetFinderPattern(m_nSymbolSize - 7, 0,m_byModuleData);
+	SetFinderPattern(0, m_nSymbolSize - 7,m_byModuleData);
 
 	//Separator pattern position detection
 	for (i = 0; i < 8; ++i)
 	{
 		m_byModuleData[i][7] = m_byModuleData[7][i] = '\x20';
-		m_byModuleData[m_nSymbleSize - 8][i] = m_byModuleData[m_nSymbleSize - 8 + i][7] = '\x20';
-		m_byModuleData[i][m_nSymbleSize - 8] = m_byModuleData[7][m_nSymbleSize - 8 + i] = '\x20';
+		m_byModuleData[m_nSymbolSize - 8][i] = m_byModuleData[m_nSymbolSize - 8 + i][7] = '\x20';
+		m_byModuleData[i][m_nSymbolSize - 8] = m_byModuleData[7][m_nSymbolSize - 8 + i] = '\x20';
 	}
 
 
@@ -1343,7 +1341,7 @@ void SetFunctionModule(BYTE m_byModuleData[177][177])
 
 	for (i = 0; i < 8; ++i)
 	{
-		m_byModuleData[m_nSymbleSize - 8 + i][8] = m_byModuleData[8][m_nSymbleSize - 8 + i] = '\x20';
+		m_byModuleData[m_nSymbolSize - 8 + i][8] = m_byModuleData[8][m_nSymbolSize - 8 + i] = '\x20';
 	}
 
 
@@ -1352,19 +1350,19 @@ void SetFunctionModule(BYTE m_byModuleData[177][177])
 
 
 	//Pattern alignment
-	for (i = 0; i < QR_VersonInfo[QR_m_nVersion].ncAlignPoint; ++i)
+	for (i = 0; i < QR_VersionInfo[QR_m_nVersion].ncAlignPoint; ++i)
 	{
-		SetAlignmentPattern(QR_VersonInfo[QR_m_nVersion].nAlignPoint[i], 6,m_byModuleData);
-		SetAlignmentPattern(6, QR_VersonInfo[QR_m_nVersion].nAlignPoint[i],m_byModuleData);
+		SetAlignmentPattern(QR_VersionInfo[QR_m_nVersion].nAlignPoint[i], 6,m_byModuleData);
+		SetAlignmentPattern(6, QR_VersionInfo[QR_m_nVersion].nAlignPoint[i],m_byModuleData);
 
-		for (j = 0; j < QR_VersonInfo[QR_m_nVersion].ncAlignPoint; ++j)
+		for (j = 0; j < QR_VersionInfo[QR_m_nVersion].ncAlignPoint; ++j)
 		{
-			SetAlignmentPattern(QR_VersonInfo[QR_m_nVersion].nAlignPoint[i], QR_VersonInfo[QR_m_nVersion].nAlignPoint[j],m_byModuleData);
+			SetAlignmentPattern(QR_VersionInfo[QR_m_nVersion].nAlignPoint[i], QR_VersionInfo[QR_m_nVersion].nAlignPoint[j],m_byModuleData);
 		}
 	}
 
 	//Timing pattern
-	for (i = 8; i <= m_nSymbleSize - 9; ++i)
+	for (i = 8; i <= m_nSymbolSize - 9; ++i)
 	{
 		m_byModuleData[i][6] = (i % 2) == 0 ? '\x30' : '\x20';
 		m_byModuleData[6][i] = (i % 2) == 0 ? '\x30' : '\x20';
@@ -1373,8 +1371,8 @@ void SetFunctionModule(BYTE m_byModuleData[177][177])
 
 void SetCodeWordPattern(BYTE m_byModuleData[177][177],BYTE m_byAllCodeWord[MAX_ALLCODEWORD])
 {
-	int x = m_nSymbleSize;
-	int y = m_nSymbleSize - 1;
+	int x = m_nSymbolSize;
+	int y = m_nSymbolSize - 1;
 
 	int nCoef_x = 1; 	//placement orientation axis x
 	int nCoef_y = 1; 	//placement orientation axis y
@@ -1394,9 +1392,9 @@ void SetCodeWordPattern(BYTE m_byModuleData[177][177],BYTE m_byAllCodeWord[MAX_A
 				{
 					y += nCoef_y;
 
-					if (y < 0 || y == m_nSymbleSize)
+					if (y < 0 || y == m_nSymbolSize)
 					{
-						y = (y < 0) ? 0 : m_nSymbleSize - 1;
+						y = (y < 0) ? 0 : m_nSymbolSize - 1;
 						nCoef_y *= -1;
 
 						x -= 2;
@@ -1420,9 +1418,9 @@ void SetMaskingPattern(int nPatternNo,BYTE m_byModuleData[177][177])
 {
 	int i, j;
 
-	for (i = 0; i < m_nSymbleSize; ++i)
+	for (i = 0; i < m_nSymbolSize; ++i)
 	{
-		for (j = 0; j < m_nSymbleSize; ++j)
+		for (j = 0; j < m_nSymbolSize; ++j)
 		{
 			if (! (m_byModuleData[j][i] & 0x20)) //Exclude a functional module
 			{
@@ -1529,14 +1527,14 @@ void SetFormatInfoPattern(int nPatternNo,BYTE m_byModuleData[177][177])
 
 	//Position detection patterns located under the upper right corner
 	for (i = 0; i <= 7; ++i)
-		m_byModuleData[m_nSymbleSize - 1 - i][8] = (nFormatData & (1 << i)) ? '\x30' : '\x20';
+		m_byModuleData[m_nSymbolSize - 1 - i][8] = (nFormatData & (1 << i)) ? '\x30' : '\x20';
 
 
 	//Right lower left position detection patterns located
-	m_byModuleData[8][m_nSymbleSize - 8] = '\x30'; 	//Module fixed dark
+	m_byModuleData[8][m_nSymbolSize - 8] = '\x30'; 	//Module fixed dark
 
 	for (i = 8; i <= 14; ++i)
-		m_byModuleData[8][m_nSymbleSize - 15 + i] = (nFormatData & (1 << i)) ? '\x30' : '\x20';
+		m_byModuleData[8][m_nSymbolSize - 15 + i] = (nFormatData & (1 << i)) ? '\x30' : '\x20';
 }
 int CountPenalty(BYTE m_byModuleData[177][177])
 {
@@ -1545,13 +1543,13 @@ int CountPenalty(BYTE m_byModuleData[177][177])
 
 
 	//Column of the same color adjacent module
-	for (i = 0; i < m_nSymbleSize; ++i)
+	for (i = 0; i < m_nSymbolSize; ++i)
 	{
-		for (j = 0; j < m_nSymbleSize - 4; ++j)
+		for (j = 0; j < m_nSymbolSize - 4; ++j)
 		{
 			int nCount = 1;
 
-			for (k = j + 1; k < m_nSymbleSize; k++)
+			for (k = j + 1; k < m_nSymbolSize; k++)
 			{
 				if (((m_byModuleData[i][j] & 0x11) == 0) == ((m_byModuleData[i][k] & 0x11) == 0))
 					++nCount;
@@ -1570,13 +1568,13 @@ int CountPenalty(BYTE m_byModuleData[177][177])
 
 
 	//Adjacent module line of the same color
-	for (i = 0; i < m_nSymbleSize; ++i)
+	for (i = 0; i < m_nSymbolSize; ++i)
 	{
-		for (j = 0; j < m_nSymbleSize - 4; ++j)
+		for (j = 0; j < m_nSymbolSize - 4; ++j)
 		{
 			int nCount = 1;
 
-			for (k = j + 1; k < m_nSymbleSize; k++)
+			for (k = j + 1; k < m_nSymbolSize; k++)
 			{
 				if (((m_byModuleData[j][i] & 0x11) == 0) == ((m_byModuleData[k][i] & 0x11) == 0))
 					++nCount;
@@ -1595,9 +1593,9 @@ int CountPenalty(BYTE m_byModuleData[177][177])
 
 
 	//Modules of the same color block (2 ~ 2)
-	for (i = 0; i < m_nSymbleSize - 1; ++i)
+	for (i = 0; i < m_nSymbolSize - 1; ++i)
 	{
-		for (j = 0; j < m_nSymbleSize - 1; ++j)
+		for (j = 0; j < m_nSymbolSize - 1; ++j)
 		{
 			if ((((m_byModuleData[i][j] & 0x11) == 0) == ((m_byModuleData[i + 1][j]		& 0x11) == 0)) &&
 				(((m_byModuleData[i][j] & 0x11) == 0) == ((m_byModuleData[i]	[j + 1] & 0x11) == 0)) &&
@@ -1610,9 +1608,9 @@ int CountPenalty(BYTE m_byModuleData[177][177])
 
 
 	//Pattern (dark dark: light: dark: light) ratio 1:1:3:1:1 in the same column
-	for (i = 0; i < m_nSymbleSize; ++i)
+	for (i = 0; i < m_nSymbolSize; ++i)
 	{
-		for (j = 0; j < m_nSymbleSize - 6; ++j)
+		for (j = 0; j < m_nSymbolSize - 6; ++j)
 		{
 			if (((j == 0) ||				 (! (m_byModuleData[i][j - 1] & 0x11))) &&
 											 (   m_byModuleData[i][j]     & 0x11)   &&
@@ -1622,16 +1620,16 @@ int CountPenalty(BYTE m_byModuleData[177][177])
 											 (   m_byModuleData[i][j + 4] & 0x11)   &&
 											 (! (m_byModuleData[i][j + 5] & 0x11))  &&
 											 (   m_byModuleData[i][j + 6] & 0x11)   &&
-				((j == m_nSymbleSize - 7) || (! (m_byModuleData[i][j + 7] & 0x11))))
+				((j == m_nSymbolSize - 7) || (! (m_byModuleData[i][j + 7] & 0x11))))
 			{
 
 				//Clear pattern of four or more before or after
 				if (((j < 2 || ! (m_byModuleData[i][j - 2] & 0x11)) &&
 					 (j < 3 || ! (m_byModuleData[i][j - 3] & 0x11)) &&
 					 (j < 4 || ! (m_byModuleData[i][j - 4] & 0x11))) ||
-					((j >= m_nSymbleSize - 8  || ! (m_byModuleData[i][j + 8]  & 0x11)) &&
-					 (j >= m_nSymbleSize - 9  || ! (m_byModuleData[i][j + 9]  & 0x11)) &&
-					 (j >= m_nSymbleSize - 10 || ! (m_byModuleData[i][j + 10] & 0x11))))
+					((j >= m_nSymbolSize - 8  || ! (m_byModuleData[i][j + 8]  & 0x11)) &&
+					 (j >= m_nSymbolSize - 9  || ! (m_byModuleData[i][j + 9]  & 0x11)) &&
+					 (j >= m_nSymbolSize - 10 || ! (m_byModuleData[i][j + 10] & 0x11))))
 				{
 					nPenalty += 40;
 				}
@@ -1641,9 +1639,9 @@ int CountPenalty(BYTE m_byModuleData[177][177])
 
 
 	//Pattern (dark dark: light: dark: light) in the same line ratio 1:1:3:1:1
-	for (i = 0; i < m_nSymbleSize; ++i)
+	for (i = 0; i < m_nSymbolSize; ++i)
 	{
-		for (j = 0; j < m_nSymbleSize - 6; ++j)
+		for (j = 0; j < m_nSymbolSize - 6; ++j)
 		{
 			if (((j == 0) ||				 (! (m_byModuleData[j - 1][i] & 0x11))) &&
 											 (   m_byModuleData[j]    [i] & 0x11)   &&
@@ -1653,16 +1651,16 @@ int CountPenalty(BYTE m_byModuleData[177][177])
 											 (   m_byModuleData[j + 4][i] & 0x11)   &&
 											 (! (m_byModuleData[j + 5][i] & 0x11))  &&
 											 (   m_byModuleData[j + 6][i] & 0x11)   &&
-				((j == m_nSymbleSize - 7) || (! (m_byModuleData[j + 7][i] & 0x11))))
+				((j == m_nSymbolSize - 7) || (! (m_byModuleData[j + 7][i] & 0x11))))
 			{
 
 				//Clear pattern of four or more before or after
 				if (((j < 2 || ! (m_byModuleData[j - 2][i] & 0x11)) &&
 					 (j < 3 || ! (m_byModuleData[j - 3][i] & 0x11)) &&
 					 (j < 4 || ! (m_byModuleData[j - 4][i] & 0x11))) ||
-					((j >= m_nSymbleSize - 8  || ! (m_byModuleData[j + 8][i]  & 0x11)) &&
-					 (j >= m_nSymbleSize - 9  || ! (m_byModuleData[j + 9][i]  & 0x11)) &&
-					 (j >= m_nSymbleSize - 10 || ! (m_byModuleData[j + 10][i] & 0x11))))
+					((j >= m_nSymbolSize - 8  || ! (m_byModuleData[j + 8][i]  & 0x11)) &&
+					 (j >= m_nSymbolSize - 9  || ! (m_byModuleData[j + 9][i]  & 0x11)) &&
+					 (j >= m_nSymbolSize - 10 || ! (m_byModuleData[j + 10][i] & 0x11))))
 				{
 					nPenalty += 40;
 				}
@@ -1674,9 +1672,9 @@ int CountPenalty(BYTE m_byModuleData[177][177])
 	//The proportion of modules for the entire dark
 	int nCount = 0;
 
-	for (i = 0; i < m_nSymbleSize; ++i)
+	for (i = 0; i < m_nSymbolSize; ++i)
 	{
-		for (j = 0; j < m_nSymbleSize; ++j)
+		for (j = 0; j < m_nSymbolSize; ++j)
 		{
 			if (! (m_byModuleData[i][j] & 0x11))
 			{
@@ -1685,7 +1683,7 @@ int CountPenalty(BYTE m_byModuleData[177][177])
 		}
 	}
 
-	nPenalty += (abs(50 - ((nCount * 100) / (m_nSymbleSize * m_nSymbleSize))) / 5) * 10;
+	nPenalty += (abs(50 - ((nCount * 100) / (m_nSymbolSize * m_nSymbolSize))) / 5) * 10;
 
 	return nPenalty;
 }
@@ -1736,9 +1734,9 @@ void FormatModule(BYTE m_byModuleData[177][177],BYTE m_byAllCodeWord[MAX_ALLCODE
 
 	// The module pattern converted to a Boolean value
 
-	for (i = 0; i < m_nSymbleSize; ++i)
+	for (i = 0; i < m_nSymbolSize; ++i)
 	{
-		for (j = 0; j < m_nSymbleSize; ++j)
+		for (j = 0; j < m_nSymbolSize; ++j)
 		{
 			m_byModuleData[i][j] = (BYTE)((m_byModuleData[i][j] & 0x11) != 0);
 		}
@@ -1817,7 +1815,7 @@ int EncodeData(int nLevel, int nVersion , LPCSTR lpsSource, int sourcelen, unsig
 
 
 	// Terminator addition code "0000"
-	int ncDataCodeWord = QR_VersonInfo[QR_m_nVersion].ncDataCodeWord[nLevel];
+	int ncDataCodeWord = QR_VersionInfo[QR_m_nVersion].ncDataCodeWord[nLevel];
 
 	int ncTerminater = min(4, (ncDataCodeWord * 8) - m_ncDataCodeWordBit);
 
@@ -1837,7 +1835,7 @@ int EncodeData(int nLevel, int nVersion , LPCSTR lpsSource, int sourcelen, unsig
 
 
 	// Calculated the total clear area code word
-	m_ncAllCodeWord = QR_VersonInfo[QR_m_nVersion].ncAllCodeWord;
+	m_ncAllCodeWord = QR_VersionInfo[QR_m_nVersion].ncAllCodeWord;
 
 	ZeroMemory(m_byAllCodeWord, m_ncAllCodeWord);
 
@@ -1845,9 +1843,9 @@ int EncodeData(int nLevel, int nVersion , LPCSTR lpsSource, int sourcelen, unsig
 
 
 	// Division number data block
-	int ncBlock1 = QR_VersonInfo[QR_m_nVersion].RS_BlockInfo1[nLevel].ncRSBlock;
+	int ncBlock1 = QR_VersionInfo[QR_m_nVersion].RS_BlockInfo1[nLevel].ncRSBlock;
 
-	int ncBlock2 = QR_VersonInfo[QR_m_nVersion].RS_BlockInfo2[nLevel].ncRSBlock;
+	int ncBlock2 = QR_VersionInfo[QR_m_nVersion].RS_BlockInfo2[nLevel].ncRSBlock;
 
 	int ncBlockSum = ncBlock1 + ncBlock2;
 
@@ -1856,9 +1854,9 @@ int EncodeData(int nLevel, int nVersion , LPCSTR lpsSource, int sourcelen, unsig
 
 
 	// The number of data code words by block
-	int ncDataCw1 = QR_VersonInfo[QR_m_nVersion].RS_BlockInfo1[nLevel].ncDataCodeWord;
+	int ncDataCw1 = QR_VersionInfo[QR_m_nVersion].RS_BlockInfo1[nLevel].ncDataCodeWord;
 
-	int ncDataCw2 = QR_VersonInfo[QR_m_nVersion].RS_BlockInfo2[nLevel].ncDataCodeWord;
+	int ncDataCw2 = QR_VersionInfo[QR_m_nVersion].RS_BlockInfo2[nLevel].ncDataCodeWord;
 
 
 	// Code word interleaving data placement
@@ -1895,10 +1893,10 @@ int EncodeData(int nLevel, int nVersion , LPCSTR lpsSource, int sourcelen, unsig
 
 
 	// RS code words by block number (currently пїЅпїЅ The same number)
-	int ncRSCw1 = QR_VersonInfo[QR_m_nVersion].RS_BlockInfo1[nLevel].ncAllCodeWord - ncDataCw1;
+	int ncRSCw1 = QR_VersionInfo[QR_m_nVersion].RS_BlockInfo1[nLevel].ncAllCodeWord - ncDataCw1;
 
 
-	int ncRSCw2 = QR_VersonInfo[QR_m_nVersion].RS_BlockInfo2[nLevel].ncAllCodeWord - ncDataCw2;
+	int ncRSCw2 = QR_VersionInfo[QR_m_nVersion].RS_BlockInfo2[nLevel].ncAllCodeWord - ncDataCw2;
 
 
 	// RS code word is calculated
@@ -1946,7 +1944,7 @@ int EncodeData(int nLevel, int nVersion , LPCSTR lpsSource, int sourcelen, unsig
 		++nBlockNo;
 	}
 
-	m_nSymbleSize = QR_m_nVersion * 4 + 17;
+	m_nSymbolSize = QR_m_nVersion * 4 + 17;
 
 
 	// Module placement
@@ -1954,17 +1952,17 @@ int EncodeData(int nLevel, int nVersion , LPCSTR lpsSource, int sourcelen, unsig
 
 
 
-	for(i=0;i<m_nSymbleSize;i++){
-		for (j=0;j<m_nSymbleSize;j++){
+	for(i=0;i<m_nSymbolSize;i++){
+		for (j=0;j<m_nSymbolSize;j++){
                 if (!m_byModuleData[i][j]){
-                  putBitToPos((j*m_nSymbleSize)+i+1,0,QR_m_data);
+                  putBitToPos((j*m_nSymbolSize)+i+1,0,QR_m_data);
                 }else
-                  putBitToPos((j*m_nSymbleSize)+i+1,1,QR_m_data);}
+                  putBitToPos((j*m_nSymbolSize)+i+1,1,QR_m_data);}
 
 	}
 
 
-	return m_nSymbleSize;
+	return m_nSymbolSize;
 
 }
 

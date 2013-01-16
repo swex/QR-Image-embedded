@@ -1,0 +1,22 @@
+A QR Code encoding library
+--------------------------
+
+This library encodes data in a QR Code. The output is a binary stream representing the QR Code.
+
+The main function is EncodeData and can be used as follows:
+
+int QR_width=EncodeData(level,version,inputdata,inputdata_length,outputdata_area);
+
+If you set inputdata_length to 0 the function will determine the length from NULL termination of inputdata.
+
+QR_width then contains the width of the code. So the function with write QR_width*QR_width bits to outputdata_area.
+1s representing black, 0s white. To use this data you'd iterate over it something like this:
+
+for(int y=0;y<QR_width;y++) {
+  for(int x=0;x<QR_width;x++) {
+    int value = get_next_bit();
+    draw_pixel(x,y,value);
+  }
+}
+
+The code is provided under the terms of the BSD license.
