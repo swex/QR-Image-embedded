@@ -34,7 +34,7 @@ for (x = 0; x < width; x++) {
 	for (y = 0; y < width; y++) {
 		int byte = (x * width + y) / 8;
 		int bit = (x * width + y) % 8;
-		int value = data[byte] & (0x80 >> bit);
+		int value = encoded[byte] & (0x80 >> bit);
 		set_pixel(x, y, value ? BLACK : WHITE);
 	}
 }
