@@ -1,68 +1,170 @@
-#include "QR_Encode.h"
+#include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
-#include <wchar.h>
-#include <locale.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-int main(int argc, char *argv[])
+#include "QR_Encode.h"
+
+#define MODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH) /* 0664 */
+
+#define WHITE "\x1b[47m\x1b[30m"
+#define BLACK "\x1b[40m\x1b[37m"
+#define RESET "\x1b[0m"
+
+int margin = 4;
+
+/* Because getprogname(3) is not portable yet. */
+const char *progname;
+
+void usage(void);
+void white(void);
+void black(void);
+void nl(void);
+void top_bottom_margin(int);
+void left_right_margin(void);
+void ansi_qr(unsigned char *, int);
+
+void
+usage(void)
 {
-  setlocale(LC_ALL, "");
-  if (argc<3) {
-    wprintf(L"qrencode <input string> <output file> [QR Code level] [QR Code version]\n");
-    wprintf(L"level and version default to 3 and 0\n");
-    return 1;
-  }
+	fprintf(stderr, "%s [-l level] [-v version] [-o file] "
+	    "[-m margin] <input string>\n", progname);
+	fprintf(stderr, "level and version default to 3 and 0\n");
+	exit(2);
+}
 
-  int level=3;
-  if(argc>3) {
-    level = atoi(argv[3]);
-  }
+int
+main(int argc, char *argv[])
+{
+	progname = argv[0];
+	int level = 3;
+	int version = 0;
+	char *fname = NULL;
+	int fd = -1;
+	int ch;
 
-  int version=0;
-  if(argc>4) {
-    version = atoi(argv[4]);
-  }
+	while ((ch = getopt(argc, argv, "l:v:o:m:")) != -1) {
+		switch (ch) {
+		case 'l':
+			level = atoi(optarg);
+			break;
+		case 'v':
+			version = atoi(optarg);
+			break;
+		case 'o':
+			fname = optarg;
+			break;
+		case 'm':
+			margin = atoi(optarg);
+			break;
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	}
+	argc -= optind;
+	argv += optind;
 
-  // Read in the input data from file, terminate with 0.
-  /*FILE *inputfile = fopen(argv[1],"r");
-  char inputdata[10000];
-  int n;
-  for(n=0;(!feof(inputfile)) && (n < 10000);n++) {
-    int c = getc(inputfile);
-    inputdata[n] = c;
-    inputdata[n+1]=0;
-  }
-*/
-  
-  // **** This calls the library and encodes the data
-  // *** length is taken from NULL termination, however can also be passed by parameter.
-  BYTE QR_m_data[3917]; //max possible bits resolution 177*177/8+1
-  int QR_width=EncodeData(3,version,argv[1],0,QR_m_data);
+	if (argc != 1) {
+		usage();
+		/* NOTREACHED */
+	}
 
-  // Write the data to the output file
-  FILE *f=fopen(argv[2],"w");
-  int size=((QR_width*QR_width)/8)+(((QR_width*QR_width)%8)?1:0);
-  wprintf(L"\nwriting file %i bytes size \n",size);
-  fwrite(QR_m_data,size,1,f);
-  fclose(f);
+	unsigned char encoded[MAX_BITDATA];
+	int width = EncodeData(level, version, argv[0], 0, encoded);
+	int size = ((width*width)/8) + (((width*width)%8)?1:0);
 
+	printf("QR Code width: %d\n", width);
 
-  // This code dumps the QR code to the screen as ASCII.
-  wprintf(L"QR Code width: %u\n",QR_width);
-  
-  int bit_count=0;
-  wprintf(L"%i",size);
-  int n;
-  for(n=0;n<size;n++) {
-    int b=0;
-    for(b=7;b>=0;b--) {
-      
-      if((bit_count%QR_width) == 0) wprintf(L"\n");
-      if (((n+1)*8)-b>QR_width*QR_width){break;}
-      if((QR_m_data[n] & (1 << b)) != 0) {wprintf(L"\u2588");wprintf(L"\u2588"); }
-                                    else {wprintf(L" ");wprintf(L" "); }
-      bit_count++;
-    }
-  }
-  //wprintf(L"\n");
-  return 0;
+	if (fname != NULL && *fname != '\0') {
+		fd = open(fname, O_WRONLY | O_CREAT | O_TRUNC, MODE);
+		if (fd == -1)
+			err(1, "open");
+
+		printf("writing file (%d bytes)\n", size);
+		if (write(fd, encoded, size) != size)
+			err(1, "write");
+
+		close(fd);
+	}
+
+	ansi_qr(encoded, width);
+
+	return 0;
+}
+
+enum { was_reset, was_white, was_black } last_color = was_reset;
+
+void
+white(void)
+{
+	if (last_color != was_white) {
+		printf(WHITE);
+		last_color = was_white;
+	}
+	printf("  ");
+}
+
+void
+black(void)
+{
+	if (last_color != was_black) {
+		printf(BLACK);
+		last_color = was_black;
+	}
+	printf("  ");
+}
+
+void
+nl(void)
+{
+	if (last_color != was_reset) {
+		printf(RESET);
+		last_color = was_reset;
+	}
+	printf("\n");
+}
+
+void
+top_bottom_margin(int width)
+{
+	int i, j;
+
+	for (i = 0; i < margin; i++) {
+		for (j = 0; j < width + (margin * 2); j++)
+			white();
+		nl();
+	}
+}
+
+void
+left_right_margin(void)
+{
+	int i;
+
+	for (i = 0; i < margin; i++)
+		white();
+}
+
+void
+ansi_qr(unsigned char *data, int width)
+{
+	int i, j;
+
+	top_bottom_margin(width);
+	for (i = 0; i < width; i++) {
+		left_right_margin();
+		for (j = 0; j < width; j++) {
+			long byte = (i * width + j) / 8;
+			long bit = (i * width + j) % 8;
+			if (data[byte] & (0x80 >> bit))
+				black();
+			else
+				white();
+		}
+		left_right_margin();
+		nl();
+	}
+	top_bottom_margin(width);
 }
