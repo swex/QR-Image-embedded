@@ -22,6 +22,7 @@ The function returns an int representing the width of the produced QR code.
 
 ```
 unsigned char encoded[MAX_BITDATA];
+memset(encoded, 0, sizeof(encoded));
 int width = EncodeData(level, version, argv[0], 0, encoded);
 int size = ((width*width)/8) + (((width*width)%8)?1:0);
 

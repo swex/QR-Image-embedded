@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "QR_Encode.h"
@@ -72,6 +73,7 @@ main(int argc, char *argv[])
 	}
 
 	unsigned char encoded[MAX_BITDATA];
+	memset(encoded, 0, sizeof(encoded));
 	int width = EncodeData(level, version, argv[0], 0, encoded);
 	int size = ((width*width)/8) + (((width*width)%8)?1:0);
 
