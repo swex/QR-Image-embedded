@@ -1,18 +1,55 @@
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include "QR_Encode.h"
 
 
-int m_nLevel;
-int QR_m_nVersion;
-int m_nMaskingNo;
+typedef unsigned short WORD;
+typedef unsigned char BYTE;
+typedef BYTE* LPBYTE;
+typedef const char* LPCSTR;
 
-int m_ncDataCodeWordBit,m_ncAllCodeWord, nEncodeVersion;
 
-int m_ncDataBlock;
+typedef struct tagRS_BLOCKINFO
+{
+	int ncRSBlock;		//RS block number
+	int ncAllCodeWord;	//The number of codewords in the block
+	int ncDataCodeWord;	//The number of data code words (the number of code words - the number of RS code word)
+
+} RS_BLOCKINFO, *LPRS_BLOCKINFO;
+
+/////////////////////////////////////////////////////////////////////////////
+//Version code-related information (model number)
+
+typedef struct tagQR_VERSIONINFO
+{
+	int nVersionNo;
+	int ncAllCodeWord;
+
+	// Error correction levels (0 = L, 1 = M, 2 = Q, 3 = H)
+	int ncDataCodeWord[4];	// data len
+
+	int ncAlignPoint;	// position
+	int nAlignPoint[6];	// numberof
+
+	RS_BLOCKINFO RS_BlockInfo1[4]; // EC pos
+	RS_BLOCKINFO RS_BlockInfo2[4]; // EC pos
+
+} QR_VERSIONINFO, *LPQR_VERSIONINFO;
+
+#define ZeroMemory(Destination,Length) memset((Destination),0,(Length))
+
+static int m_nLevel;
+static int QR_m_nVersion;
+static int m_nMaskingNo;
+
+static int m_ncDataCodeWordBit,m_ncAllCodeWord, nEncodeVersion;
+
+static int m_ncDataBlock;
 
 //BYTE m_byRSWork[MAX_CODEBLOCK]; //RS code word calculation work
 
-int m_nSymbolSize;
+static int m_nSymbolSize;
 
 static QR_VERSIONINFO QR_VersionInfo[] = {{0}, // (Ver.0)
 										 { 1, // Ver.1
@@ -586,7 +623,7 @@ static int nIndicatorLen8Bit[]	   = { 8, 16, 16};
 static int nIndicatorLenKanji[]	   = { 8, 10, 12};
 
 
-int IsNumeralData(unsigned char c)
+static int IsNumeralData(unsigned char c)
 {
 	if (c >= '0' && c <= '9')
 		return 1;
@@ -600,7 +637,7 @@ int IsNumeralData(unsigned char c)
 // Argument: research letter
 // Returns: = true if applicable
 
-int IsAlphabetData(unsigned char c)
+static int IsAlphabetData(unsigned char c)
 {
 	if (c >= '0' && c <= '9')
 		return 1;
@@ -621,7 +658,7 @@ int IsAlphabetData(unsigned char c)
 // Returns: = true if applicable
 // Remarks: S-JIS is excluded since the EBBFh
 
-int IsKanjiData(unsigned char c1, unsigned char c2)
+static int IsKanjiData(unsigned char c1, unsigned char c2)
 {
 	if (((c1 >= 0x81 && c1 <= 0x9f) || (c1 >= 0xe0 && c1 <= 0xeb)) && (c2 >= 0x40))
 	{
@@ -640,7 +677,7 @@ int IsKanjiData(unsigned char c1, unsigned char c2)
 // Number of arguments: the target character
 // Returns: binary value
 
-BYTE AlphabetToBinary(unsigned char c)
+static BYTE AlphabetToBinary(unsigned char c)
 {
 	if (c >= '0' && c <= '9') return (unsigned char)(c - '0');
 
@@ -670,7 +707,7 @@ BYTE AlphabetToBinary(unsigned char c)
 // APPLICATIONS: Binary Kanji character mode
 // Number of arguments: the target character
 // Returns: binary value
-WORD KanjiToBinaly(WORD wc)
+static WORD KanjiToBinaly(WORD wc)
 {
 	if (wc >= 0x8140 && wc <= 0x9ffc)
 		wc -= 0x8140;
@@ -680,7 +717,7 @@ WORD KanjiToBinaly(WORD wc)
 	return (WORD)(((wc >> 8) * 0xc0) + (wc & 0x00ff));
 }
 
-int SetBitStream(int nIndex, WORD wData, int ncData,BYTE m_byDataCodeWord[MAX_DATACODEWORD])
+static int SetBitStream(int nIndex, WORD wData, int ncData,BYTE m_byDataCodeWord[MAX_DATACODEWORD])
 {
 	int i;
 
@@ -699,7 +736,7 @@ int SetBitStream(int nIndex, WORD wData, int ncData,BYTE m_byDataCodeWord[MAX_DA
 }
 
 
-int GetBitLength(BYTE nMode, int ncData, int nVerGroup)
+static int GetBitLength(BYTE nMode, int ncData, int nVerGroup)
 {
 	int ncBits = 0;
 
@@ -740,7 +777,7 @@ int GetBitLength(BYTE nMode, int ncData, int nVerGroup)
 
 
 
-int EncodeSourceData(LPCSTR lpsSource, int ncLength, int nVerGroup,int m_nBlockLength[MAX_DATACODEWORD],BYTE m_byBlockMode[MAX_DATACODEWORD],BYTE m_byDataCodeWord[MAX_DATACODEWORD])
+static int EncodeSourceData(LPCSTR lpsSource, int ncLength, int nVerGroup,int m_nBlockLength[MAX_DATACODEWORD],BYTE m_byBlockMode[MAX_DATACODEWORD],BYTE m_byDataCodeWord[MAX_DATACODEWORD])
 {
 
 	ZeroMemory(m_nBlockLength, sizeof(m_nBlockLength));
@@ -1153,7 +1190,7 @@ int EncodeSourceData(LPCSTR lpsSource, int ncLength, int nVerGroup,int m_nBlockL
 
 
 
-int GetEncodeVersion(int nVersion, LPCSTR lpsSource, int ncLength,int m_nBlockLength[MAX_DATACODEWORD],BYTE m_byBlockMode[MAX_DATACODEWORD],BYTE m_byDataCodeWord[MAX_DATACODEWORD])
+static int GetEncodeVersion(int nVersion, LPCSTR lpsSource, int ncLength,int m_nBlockLength[MAX_DATACODEWORD],BYTE m_byBlockMode[MAX_DATACODEWORD],BYTE m_byDataCodeWord[MAX_DATACODEWORD])
 {
 	int nVerGroup = nVersion >= 27 ? QR_VERSION_L : (nVersion >= 10 ? QR_VERSION_M : QR_VERSION_S);
 	int i, j;
@@ -1193,7 +1230,7 @@ int GetEncodeVersion(int nVersion, LPCSTR lpsSource, int ncLength,int m_nBlockLe
 }
 
 
-int min(int a, int b) {
+static int min(int a, int b) {
     if (a<=b) {
         return a;
     }
@@ -1202,7 +1239,7 @@ int min(int a, int b) {
     }
 }
 
-void GetRSCodeWord(LPBYTE lpbyRSWork, int ncDataCodeWord, int ncRSCodeWord)
+static void GetRSCodeWord(LPBYTE lpbyRSWork, int ncDataCodeWord, int ncRSCodeWord)
 {
 	int i, j;
 
@@ -1238,7 +1275,7 @@ void GetRSCodeWord(LPBYTE lpbyRSWork, int ncDataCodeWord, int ncRSCodeWord)
 	}
 }
 
-void SetFinderPattern(int x, int y,BYTE m_byModuleData[177][177])
+static void SetFinderPattern(int x, int y,BYTE m_byModuleData[177][177])
 {
 	static BYTE byPattern[] = {0x7f,  // 1111111b
 							   0x41,  // 1000001b
@@ -1258,7 +1295,7 @@ void SetFinderPattern(int x, int y,BYTE m_byModuleData[177][177])
 	}
 }
 
-void SetVersionPattern(BYTE m_byModuleData[177][177])
+static void SetVersionPattern(BYTE m_byModuleData[177][177])
 {
 	int i, j;
 
@@ -1289,7 +1326,7 @@ void SetVersionPattern(BYTE m_byModuleData[177][177])
 	}
 }
 
-void SetAlignmentPattern(int x, int y,BYTE m_byModuleData[177][177])
+static void SetAlignmentPattern(int x, int y,BYTE m_byModuleData[177][177])
 {
 	static BYTE byPattern[] = {0x1f,  // 11111b
 							   0x11,  // 10001b
@@ -1314,7 +1351,7 @@ void SetAlignmentPattern(int x, int y,BYTE m_byModuleData[177][177])
 
 
 
-void SetFunctionModule(BYTE m_byModuleData[177][177])
+static void SetFunctionModule(BYTE m_byModuleData[177][177])
 {
 	int i, j;
 
@@ -1369,7 +1406,7 @@ void SetFunctionModule(BYTE m_byModuleData[177][177])
 	}
 }
 
-void SetCodeWordPattern(BYTE m_byModuleData[177][177],BYTE m_byAllCodeWord[MAX_ALLCODEWORD])
+static void SetCodeWordPattern(BYTE m_byModuleData[177][177],BYTE m_byAllCodeWord[MAX_ALLCODEWORD])
 {
 	int x = m_nSymbolSize;
 	int y = m_nSymbolSize - 1;
@@ -1414,7 +1451,7 @@ void SetCodeWordPattern(BYTE m_byModuleData[177][177],BYTE m_byAllCodeWord[MAX_A
 }
 
 
-void SetMaskingPattern(int nPatternNo,BYTE m_byModuleData[177][177])
+static void SetMaskingPattern(int nPatternNo,BYTE m_byModuleData[177][177])
 {
 	int i, j;
 
@@ -1467,7 +1504,7 @@ void SetMaskingPattern(int nPatternNo,BYTE m_byModuleData[177][177])
 	}
 }
 
-void SetFormatInfoPattern(int nPatternNo,BYTE m_byModuleData[177][177])
+static void SetFormatInfoPattern(int nPatternNo,BYTE m_byModuleData[177][177])
 {
 	int nFormatInfo;
 	int i;
@@ -1536,7 +1573,7 @@ void SetFormatInfoPattern(int nPatternNo,BYTE m_byModuleData[177][177])
 	for (i = 8; i <= 14; ++i)
 		m_byModuleData[8][m_nSymbolSize - 15 + i] = (nFormatData & (1 << i)) ? '\x30' : '\x20';
 }
-int CountPenalty(BYTE m_byModuleData[177][177])
+static int CountPenalty(BYTE m_byModuleData[177][177])
 {
 	int nPenalty = 0;
 	int i, j, k;
@@ -1689,7 +1726,7 @@ int CountPenalty(BYTE m_byModuleData[177][177])
 }
 
 
-void FormatModule(BYTE m_byModuleData[177][177],BYTE m_byAllCodeWord[MAX_ALLCODEWORD])
+static void FormatModule(BYTE m_byModuleData[177][177],BYTE m_byAllCodeWord[MAX_ALLCODEWORD])
 {
 	int i, j;
 
@@ -1744,7 +1781,7 @@ void FormatModule(BYTE m_byModuleData[177][177],BYTE m_byAllCodeWord[MAX_ALLCODE
 
 }
 
-void putBitToPos(unsigned int pos,int bw,unsigned char *bits)
+static void putBitToPos(unsigned int pos,int bw,unsigned char *bits)
 {
         if(bw==0) return;
         unsigned int tmp;
@@ -1965,6 +2002,3 @@ int EncodeData(int nLevel, int nVersion , LPCSTR lpsSource, int sourcelen, unsig
 	return m_nSymbolSize;
 
 }
-
-
-
