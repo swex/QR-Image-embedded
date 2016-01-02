@@ -1,3 +1,11 @@
-qr_encode: main.c QR_Encode.c
-	rm -f qr_encode
-	gcc -std=c99 main.c QR_Encode.c -o qr_encode
+PROG = qr_encode
+OBJS = main.o QR_Encode.o
+CFLAGS = -std=c99 -D_XOPEN_SOURCE
+
+$(PROG): $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $^
+
+main.o: CFLAGS += -Wall
+
+clean:
+	rm -f $(PROG) $(OBJS)
