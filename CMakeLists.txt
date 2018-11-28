@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 2.8)
+
+project(qr_image_embedded)
+add_library(${PROJECT_NAME} "QR_Encode.c" "QR_Encode.h")
+add_executable(qr_encode "main.c" )
+target_link_libraries(qr_encode ${PROJECT_NAME})
+if(MSVC)
+  target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
+else(MSVC)
+  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -pedantic -Werror)
+endif(MSVC)
