@@ -5,25 +5,24 @@ The output is a binary stream representing the QR Code.
 
 The main function is EncodeData() and is declared as follows:
 
-`int EncodeData(int, int, const char *, int, unsigned char *);`
-
-The function takes the following arguments:
- - `(int) level`: One of QR_LEVEL_{L,M,Q,H}.
- - `(int) version`: One of QR_VERSION_{S,M,L}.
- - `(const char *) source`: A pointer to the data to encode.
- - `(int) len`: Size of data pointed to by source.
-   If set to 0, the function will interpret source as a NUL terminated string.
- - `(unsigned char *) data`: Pointer to storage of at MAX_BITDATA bytes in
-   which to store produced data.
-
-The function returns an int representing the width of the produced QR code.
-
+```c++
+/**
+ * @brief EncodeData encodes data into QR code
+ * @param level One of QR_LEVEL_{L,M,Q,H}.
+ * @param version 0 for auto detect or required output version.
+ * @param maskPattern Choose concrete mask pattern or use autodetect
+ * @param data_in A pointer to the input data to encode.
+ * @param in_size Size of data pointed to by data_in. If set to 0, the function will interpret source as a NUL terminated string.
+ * @param output Pointer to storage of at MAX_BITDATA bytes in which to store produced data.
+ * @return -1 on error or width of the produced QR code
+ */
+int EncodeData(QR_Level level, int version, QR_MaskPattern maskPattern, const char* data_in, size_t in_size, unsigned char* output);
+```
 ## Example use
 
-```
-unsigned char encoded[MAX_BITDATA];
-memset(encoded, 0, sizeof(encoded));
-int width = EncodeData(level, version, data, 0, encoded);
+```c++
+uint8_t encoded[MAX_BITDATA];
+int width = EncodeData(QR_LEVEL_L, 0, QR_MaskAuto, data, 0, encoded);
 int size = ((width*width)/8) + (((width*width)%8)?1:0);
 
 // Dump it out somewhere.
@@ -39,3 +38,6 @@ for (x = 0; x < width; x++) {
 	}
 }
 ```
+## in action
+[![asciicast](https://asciinema.org/a/Mn3hwE4AzSZks7a67ra8ofqlh.png)](https://asciinema.org/a/3Nd3kf8cRvLjgLEdMHitDMrP5)
+
