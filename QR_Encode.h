@@ -8,7 +8,9 @@
 #ifndef _QR_ENCODE_H_
 #define _QR_ENCODE_H_
 #include <stddef.h> //just for size_t
-
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 /* Error correction level */
 typedef enum {
     QR_LEVEL_L = (0),
@@ -65,5 +67,7 @@ typedef enum {
  */
 int EncodeData(QR_Level level, int version, QR_MaskPattern maskPattern, const char* data_in, size_t in_size, unsigned char* output);
 /* See README.md for usage. */
-
-#endif
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+#endif /* _QR_ENCODE_H_ */
